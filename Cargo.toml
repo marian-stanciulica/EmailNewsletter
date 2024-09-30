@@ -14,3 +14,16 @@ name = "email_newsletter"
 actix-web = "4.9.0"
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
 reqwest = "0.12.7"
+serde = {  version = "1.0.210", features = ["derive"] }
+
+[dependencies.sqlx]
+version = "0.8.2"
+default-features = false
+features = [
+    "runtime-tokio-rustls",
+    "macros",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate"
+]
