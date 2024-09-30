@@ -1,10 +1,10 @@
 use email_newsletter::configuration::{get_configuration, DatabaseSettings};
+use email_newsletter::telemetry::{get_subscriber, init_subscriber};
+use secrecy::{ExposeSecret, Secret};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use std::sync::LazyLock;
-use secrecy::{ExposeSecret, Secret};
 use uuid::Uuid;
-use email_newsletter::telemetry::{get_subscriber, init_subscriber};
 
 // Ensure that the `tracing` stack is only initialised once using `LazyLock
 static TRACING: LazyLock<()> = LazyLock::new(|| {
@@ -53,9 +53,10 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
         password: Secret::new("password".to_string()),
         ..config.clone()
     };
-    let mut connection = PgConnection::connect(&maintenance_settings.connection_string().expose_secret())
-        .await
-        .expect("Failed to connect to Postgres");
+    let mut connection =
+        PgConnection::connect(&maintenance_settings.connection_string().expose_secret())
+            .await
+            .expect("Failed to connect to Postgres");
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
         .await
