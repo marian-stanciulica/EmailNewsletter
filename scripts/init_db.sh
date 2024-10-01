@@ -57,7 +57,6 @@ fi
 DATABASE_URL=postgres://${APP_USER}:${APP_USER_PWD}@localhost:${DB_PORT}/${APP_DB_NAME}
 export DATABASE_URL
 sqlx database create
-sqlx migrate add create_subscriptions_table
 sqlx migrate run
 
 >&2 echo "Postgres has been migrated, ready to go!"
