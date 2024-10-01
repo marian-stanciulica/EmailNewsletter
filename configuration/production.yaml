@@ -1,2 +1,6 @@
 application:
   host: 0.0.0.0
+email_client:
+  # Values from email provider
+  base_url: "remove.base.url"
+  sender_email: "remote@gmail.com"
