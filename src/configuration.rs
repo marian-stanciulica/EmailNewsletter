@@ -1,6 +1,6 @@
+use crate::domain::SubscriberEmail;
 use config::{Config, File};
 use secrecy::{ExposeSecret, Secret};
-use crate::domain::SubscriberEmail;
 
 #[derive(serde::Deserialize)]
 pub struct Settings {

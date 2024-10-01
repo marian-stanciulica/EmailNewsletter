@@ -1,10 +1,10 @@
 use email_newsletter::configuration::get_configuration;
+use email_newsletter::email_client::EmailClient;
 use email_newsletter::startup::run;
 use email_newsletter::telemetry::{get_subscriber, init_subscriber};
 use secrecy::ExposeSecret;
 use sqlx::PgPool;
 use std::net::TcpListener;
-use email_newsletter::email_client::EmailClient;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -16,8 +16,15 @@ async fn main() -> Result<(), std::io::Error> {
         PgPool::connect_lazy(configuration.database.connection_string().expose_secret())
             .expect("Failed to connect to Postgres.");
 
-    let sender_email = configuration.email_client.sender().expect("Invalid sender email address.");
-    let email_client = EmailClient::new(configuration.email_client.base_url, sender_email, configuration.email_client.authorization_token);
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address.");
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
 
     let address = format!(
         "{}:{}",
