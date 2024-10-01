@@ -1,10 +1,10 @@
-use std::sync::LazyLock;
-use sqlx::{Connection, Executor, PgConnection, PgPool};
-use uuid::Uuid;
 use email_newsletter::configuration::{get_configuration, DatabaseSettings};
+use email_newsletter::startup::{get_connection_pool, Application};
 use email_newsletter::telemetry::{get_subscriber, init_subscriber};
-use email_newsletter::startup::{ Application, get_connection_pool };
 use secrecy::{ExposeSecret, Secret};
+use sqlx::{Connection, Executor, PgConnection, PgPool};
+use std::sync::LazyLock;
+use uuid::Uuid;
 
 // Ensure that the `tracing` stack is only initialised once using `LazyLock
 static TRACING: LazyLock<()> = LazyLock::new(|| {
@@ -49,7 +49,9 @@ pub async fn spawn_app() -> TestApp {
 
     configure_database(&configuration.database).await;
 
-    let application = Application::build(configuration.clone()).await.expect("Failed to build application");
+    let application = Application::build(configuration.clone())
+        .await
+        .expect("Failed to build application");
     let address = format!("http://127.0.0.1:{}", application.port());
     let _ = tokio::spawn(application.run_until_stopped());
 

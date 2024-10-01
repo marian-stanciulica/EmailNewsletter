@@ -1,14 +1,14 @@
+use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
 use crate::routes::health_check;
 use crate::routes::subscribe;
 use actix_web::dev::Server;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
+use secrecy::ExposeSecret;
 use sqlx::PgPool;
 use std::net::TcpListener;
-use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
-use crate::configuration::{DatabaseSettings, Settings};
 
 pub struct Application {
     port: u16,
@@ -28,7 +28,7 @@ impl Application {
             configuration.email_client.base_url,
             sender_email,
             configuration.email_client.authorization_token,
-            timeout
+            timeout,
         );
 
         let address = format!(
@@ -36,7 +36,7 @@ impl Application {
             configuration.application.host, configuration.application.port
         );
         let listener = TcpListener::bind(address)?;
-        let port= listener.local_addr().unwrap().port();
+        let port = listener.local_addr().unwrap().port();
         let server = run(listener, connection_pool, email_client)?;
 
         Ok(Self { port, server })
@@ -52,26 +52,26 @@ impl Application {
 }
 
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
-        PgPool::connect_lazy(configuration.connection_string().expose_secret())
-            .expect("Failed to connect to Postgres.")
-    }
+    PgPool::connect_lazy(configuration.connection_string().expose_secret())
+        .expect("Failed to connect to Postgres.")
+}
 
-    fn run(
-        listener: TcpListener,
-        db_pool: PgPool,
-        email_client: EmailClient,
-    ) -> Result<Server, std::io::Error> {
-        let db_pool = Data::new(db_pool);
-        let email_client = Data::new(email_client);
-        let server = HttpServer::new(move || {
-            App::new()
-                .wrap(TracingLogger::default())
-                .route("/health_check", web::get().to(health_check))
-                .route("/subscriptions", web::post().to(subscribe))
-                .app_data(db_pool.clone())
-                .app_data(email_client.clone())
-        })
-            .listen(listener)?
-            .run();
-        Ok(server)
-    }
+fn run(
+    listener: TcpListener,
+    db_pool: PgPool,
+    email_client: EmailClient,
+) -> Result<Server, std::io::Error> {
+    let db_pool = Data::new(db_pool);
+    let email_client = Data::new(email_client);
+    let server = HttpServer::new(move || {
+        App::new()
+            .wrap(TracingLogger::default())
+            .route("/health_check", web::get().to(health_check))
+            .route("/subscriptions", web::post().to(subscribe))
+            .app_data(db_pool.clone())
+            .app_data(email_client.clone())
+    })
+    .listen(listener)?
+    .run();
+    Ok(server)
+}
