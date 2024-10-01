@@ -24,6 +24,7 @@ tracing-log = "0.2.0"
 secrecy = { version = "0.8.0", features = ["serde"] }
 tracing-actix-web = "0.7.13"
 unicode-segmentation = "1.12.0"
+validator = "0.18.1"
 
 [dependencies.sqlx]
 version = "0.8.2"
