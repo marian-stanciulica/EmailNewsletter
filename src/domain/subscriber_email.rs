@@ -23,8 +23,8 @@ impl AsRef<str> for SubscriberEmail {
 mod tests {
     use crate::domain::SubscriberEmail;
     use claims::assert_err;
-    use fake::Fake;
     use fake::faker::internet::en::SafeEmail;
+    use fake::Fake;
     use quickcheck::Gen;
     use rand::rngs::StdRng;
     use rand::SeedableRng;
