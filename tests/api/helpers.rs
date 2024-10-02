@@ -4,7 +4,6 @@ use email_newsletter::telemetry::{get_subscriber, init_subscriber};
 use secrecy::{ExposeSecret, Secret};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::sync::LazyLock;
-use linkify::LinkKind::Url;
 use uuid::Uuid;
 use wiremock::MockServer;
 
