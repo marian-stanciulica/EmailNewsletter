@@ -1,12 +1,12 @@
-use actix_web::{HttpResponse, ResponseError};
-use actix_web::body::BoxBody;
-use actix_web::http::header::LOCATION;
-use actix_web::web;
-use secrecy::Secret;
-use sqlx::PgPool;
 use crate::authentication::{validate_credentials, AuthError, Credentials};
 use crate::routes::error_chain_fmt;
+use actix_web::body::BoxBody;
+use actix_web::http::header::LOCATION;
 use actix_web::http::StatusCode;
+use actix_web::web;
+use actix_web::{HttpResponse, ResponseError};
+use secrecy::Secret;
+use sqlx::PgPool;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -42,14 +42,16 @@ impl ResponseError for LoginError {
     }
 }
 
-pub async fn login(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Result<HttpResponse, LoginError> {
+pub async fn login(
+    form: web::Form<FormData>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, LoginError> {
     let credentials = Credentials {
         username: form.0.username,
         password: form.0.password,
     };
 
-    tracing::Span::current()
-        .record("username", tracing::field::display(&credentials.username));
+    tracing::Span::current().record("username", tracing::field::display(&credentials.username));
 
     let user_id = validate_credentials(credentials, &pool)
         .await
@@ -58,8 +60,7 @@ pub async fn login(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Result
             AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
         })?;
 
-    tracing::Span::current()
-        .record("user_id", tracing::field::display(&user_id));
+    tracing::Span::current().record("user_id", tracing::field::display(&user_id));
     Ok(HttpResponse::SeeOther()
         .insert_header((LOCATION, "/"))
         .finish())

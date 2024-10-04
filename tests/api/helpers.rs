@@ -1,11 +1,11 @@
+use argon2::password_hash::SaltString;
+use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use email_newsletter::configuration::{get_configuration, DatabaseSettings};
 use email_newsletter::startup::{get_connection_pool, Application};
 use email_newsletter::telemetry::{get_subscriber, init_subscriber};
 use secrecy::{ExposeSecret, Secret};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::sync::LazyLock;
-use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use argon2::password_hash::SaltString;
 use uuid::Uuid;
 use wiremock::MockServer;
 
@@ -43,21 +43,21 @@ impl TestUser {
         let password_hash = Argon2::new(
             Algorithm::Argon2id,
             Version::V0x13,
-            Params::new(15000, 2, 1, None).unwrap()
+            Params::new(15000, 2, 1, None).unwrap(),
         )
-            .hash_password(self.password.as_bytes(), &salt)
-            .unwrap()
-            .to_string();
+        .hash_password(self.password.as_bytes(), &salt)
+        .unwrap()
+        .to_string();
 
         sqlx::query!(
-        "INSERT INTO users (user_id, username, password_hash) VALUES ($1, $2, $3)",
-        self.user_id,
-        self.username,
-        password_hash,
-    )
-            .execute(pool)
-            .await
-            .expect("Failed to create test users.");
+            "INSERT INTO users (user_id, username, password_hash) VALUES ($1, $2, $3)",
+            self.user_id,
+            self.username,
+            password_hash,
+        )
+        .execute(pool)
+        .await
+        .expect("Failed to create test users.");
     }
 }
 
@@ -139,7 +139,7 @@ pub async fn spawn_app() -> TestApp {
         address: format!("http://127.0.0.1:{}", application_port),
         db_pool: get_connection_pool(&configuration.database),
         email_server,
-        test_user: TestUser::generate()
+        test_user: TestUser::generate(),
     };
     test_app.test_user.store(&test_app.db_pool).await;
     test_app
