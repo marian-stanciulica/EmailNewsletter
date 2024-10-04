@@ -13,6 +13,7 @@ use base64::Engine;
 use secrecy::{ExposeSecret, Secret};
 use actix_web::http::header::HeaderValue;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use tokio::task::JoinHandle;
 
 #[derive(serde::Deserialize)]
 pub struct BodyData {
@@ -65,19 +66,35 @@ async fn validate_credentials(credentials: Credentials, pool: &PgPool) -> Result
             PublishError::AuthError(anyhow::anyhow!("Unknown username."))
         })?;
 
+    spawn_blocking_with_tracing(move || {
+        verify_password_hash(expected_password_hash, credentials.password)
+    })
+    .await
+    .context("Failed to spawn blocking task.")
+    .map_err(PublishError::UnexpectedError)??;
+
+    Ok(user_id)
+}
+
+pub fn spawn_blocking_with_tracing<F, R>(f: F) -> JoinHandle<R>
+where
+    F: FnOnce() -> R + Send + 'static,
+    R: Send + 'static,
+{
+    let current_span= tracing::Span::current();
+    tokio::task::spawn_blocking(move || current_span.in_scope(f))
+}
+
+#[tracing::instrument(name = "Verify password hash", skip(expected_password_hash, password_candidate))]
+fn verify_password_hash(expected_password_hash: Secret<String>, password_candidate: Secret<String>) -> Result<(), PublishError> {
     let expected_password_hash = PasswordHash::new(&expected_password_hash.expose_secret())
         .context("Failed to parse hash in PHC string format.")
         .map_err(PublishError::UnexpectedError)?;
 
-    tracing::info_span!("Verify password hash")
-        .in_scope(|| {
-            Argon2::default()
-                .verify_password(credentials.password.expose_secret().as_bytes(), &expected_password_hash)
-        })
+    Argon2::default()
+        .verify_password(password_candidate.expose_secret().as_bytes(), &expected_password_hash)
         .context("Invalid password.")
-        .map_err(PublishError::AuthError)?;
-
-    Ok(user_id)
+        .map_err(PublishError::AuthError)
 }
 
 #[tracing::instrument(name = "Get stored credentials", skip(username, pool))]
