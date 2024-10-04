@@ -1,6 +1,6 @@
-use wiremock::matchers::{any, path, method };
-use wiremock::{Mock, ResponseTemplate};
 use crate::helpers::{spawn_app, ConfirmationLinks, TestApp};
+use wiremock::matchers::{any, method, path};
+use wiremock::{Mock, ResponseTemplate};
 
 #[tokio::test]
 async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
@@ -13,7 +13,7 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
         .mount(&app.email_server)
         .await;
 
-    let newsletter_request_body= serde_json::json!({
+    let newsletter_request_body = serde_json::json!({
         "title": "Newsletter title",
         "content": {
             "text": "Newsletter body as plain text",
@@ -38,7 +38,7 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
         .mount(&app.email_server)
         .await;
 
-    let newsletter_request_body= serde_json::json!({
+    let newsletter_request_body = serde_json::json!({
         "title": "Newsletter title",
         "content": {
             "text": "Newsletter body as plain text",
@@ -54,7 +54,7 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
 #[tokio::test]
 async fn newsletters_returns_400_for_invalid_data() {
     let app = spawn_app().await;
-    let test_cases= vec![
+    let test_cases = vec![
         (
             serde_json::json!({
                 "content": {
@@ -73,7 +73,12 @@ async fn newsletters_returns_400_for_invalid_data() {
     for (invalid_body, error_message) in test_cases {
         let response = app.post_newsletters(invalid_body).await;
 
-        assert_eq!(400, response.status().as_u16(), "The API did not fail with 400 Bad Request when the payload was {}.", error_message)
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad Request when the payload was {}.",
+            error_message
+        )
     }
 }
 

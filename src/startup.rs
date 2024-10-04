@@ -1,8 +1,8 @@
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
-use crate::routes::{confirm, publish_newsletter};
 use crate::routes::health_check;
 use crate::routes::subscribe;
+use crate::routes::{confirm, publish_newsletter};
 use actix_web::dev::Server;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
