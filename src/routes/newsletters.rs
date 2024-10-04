@@ -12,6 +12,7 @@ use actix_web::http::header::HeaderMap;
 use base64::Engine;
 use secrecy::{ExposeSecret, Secret};
 use actix_web::http::header::HeaderValue;
+use sha3::Digest;
 
 #[derive(serde::Deserialize)]
 pub struct BodyData {
@@ -56,14 +57,17 @@ impl ResponseError for PublishError {
 }
 
 async fn validate_credentials(credentials: Credentials, pool: &PgPool) -> Result<uuid::Uuid, PublishError> {
+    let password_hash = sha3::Sha3_256::digest(credentials.password.expose_secret().as_bytes());
+    let password_hash = format!("{:x}", password_hash);
+
     let user_id: Option<_> = sqlx::query!(
         r#"
            SELECT user_id
            FROM users
-           WHERE username = $1 AND password = $2
+           WHERE username = $1 AND password_hash = $2
         "#,
         credentials.username,
-        credentials.password.expose_secret()
+        password_hash
     )
         .fetch_optional(pool)
         .await
