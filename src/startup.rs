@@ -50,7 +50,7 @@ impl Application {
             configuration.application.base_url,
             configuration.application.hmac_secret,
             configuration.redis.uri,
-            configuration.redis.is_cookie_secure
+            configuration.redis.is_cookie_secure,
         )
         .await?;
 
@@ -95,7 +95,7 @@ async fn run(
             .wrap(
                 SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
                     .cookie_secure(is_cookie_secure)
-                    .build()
+                    .build(),
             )
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))

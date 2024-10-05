@@ -13,7 +13,7 @@ pub struct Settings {
 #[derive(serde::Deserialize, Clone)]
 pub struct RedisSettings {
     pub uri: Secret<String>,
-    pub is_cookie_secure: bool
+    pub is_cookie_secure: bool,
 }
 
 #[derive(serde::Deserialize, Clone)]
