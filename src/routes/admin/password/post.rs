@@ -2,6 +2,7 @@ use actix_web::{web, HttpResponse};
 use actix_web_flash_messages::FlashMessage;
 use secrecy::{ExposeSecret, Secret};
 use sqlx::PgPool;
+use validator::ValidateLength;
 use crate::authentication::{validate_credentials, AuthError, Credentials};
 use crate::routes::admin::dashboard::get_username;
 use crate::session_state::TypedSession;
@@ -43,6 +44,16 @@ pub async fn change_password(form: web::Form<FormData>, session: TypedSession, p
             }
             AuthError::UnexpectedError(_) => Err(e500(e).into())
         }
+    }
+
+    if form.0.new_password.expose_secret().length().unwrap() < 12 {
+        FlashMessage::error("The new password must have more than 12 characters.").send();
+        return Ok(see_other("/admin/password"))
+    }
+
+    if form.0.new_password.expose_secret().length().unwrap() > 128 {
+        FlashMessage::error("The new password must have less than 129 characters.").send();
+        return Ok(see_other("/admin/password"))
     }
 
     todo!()
