@@ -1,11 +1,11 @@
+use crate::authentication::{validate_credentials, AuthError, Credentials, UserId};
+use crate::routes::admin::dashboard::get_username;
+use crate::utils::{e500, see_other};
 use actix_web::{web, HttpResponse};
 use actix_web_flash_messages::FlashMessage;
 use secrecy::{ExposeSecret, Secret};
 use sqlx::PgPool;
 use validator::ValidateLength;
-use crate::authentication::{validate_credentials, AuthError, Credentials, UserId};
-use crate::routes::admin::dashboard::get_username;
-use crate::utils::{e500, see_other};
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -17,7 +17,7 @@ pub struct FormData {
 pub async fn change_password(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
-    user_id: web::ReqData<UserId>
+    user_id: web::ReqData<UserId>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let user_id = user_id.into_inner();
 
@@ -25,14 +25,14 @@ pub async fn change_password(
         FlashMessage::error(
             "You entered two different new passwords - the field values must match.",
         )
-            .send();
-        return Ok(see_other("/admin/password"))
+        .send();
+        return Ok(see_other("/admin/password"));
     }
 
     let username = get_username(*user_id, &pool).await.map_err(e500)?;
     let credentials = Credentials {
         username,
-        password: form.0.current_password
+        password: form.0.current_password,
     };
 
     if let Err(e) = validate_credentials(credentials, &pool).await {
@@ -41,18 +41,18 @@ pub async fn change_password(
                 FlashMessage::error("The current password is incorrect.").send();
                 Ok(see_other("/admin/password"))
             }
-            AuthError::UnexpectedError(_) => Err(e500(e).into())
-        }
+            AuthError::UnexpectedError(_) => Err(e500(e).into()),
+        };
     }
 
     if form.0.new_password.expose_secret().length().unwrap() < 12 {
         FlashMessage::error("The new password must have more than 12 characters.").send();
-        return Ok(see_other("/admin/password"))
+        return Ok(see_other("/admin/password"));
     }
 
     if form.0.new_password.expose_secret().length().unwrap() > 128 {
         FlashMessage::error("The new password must have less than 129 characters.").send();
-        return Ok(see_other("/admin/password"))
+        return Ok(see_other("/admin/password"));
     }
 
     crate::authentication::change_password(*user_id, form.0.new_password, &pool)

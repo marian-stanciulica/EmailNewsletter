@@ -1,10 +1,10 @@
 use crate::session_state::TypedSession;
+use crate::utils::{e500, see_other};
 use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse};
 use anyhow::Context;
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::utils::{e500, see_other};
 
 pub async fn admin_dashboard(
     session: TypedSession,
@@ -13,7 +13,7 @@ pub async fn admin_dashboard(
     let username = if let Some(user_id) = session.get_user_id().map_err(e500)? {
         get_username(user_id, &pool).await.map_err(e500)?
     } else {
-        return Ok(see_other("/login"))
+        return Ok(see_other("/login"));
     };
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
