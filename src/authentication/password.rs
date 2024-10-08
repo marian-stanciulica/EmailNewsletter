@@ -42,8 +42,8 @@ pub async fn validate_credentials(
     spawn_blocking_with_tracing(move || {
         verify_password_hash(expected_password_hash, credentials.password)
     })
-    .await
-    .context("Failed to spawn blocking task.")??;
+        .await
+        .context("Failed to spawn blocking task.")??;
 
     user_id
         .ok_or_else(|| anyhow::anyhow!("Unknown username."))
@@ -83,10 +83,10 @@ async fn get_store_credentials(
         "#,
         username,
     )
-    .fetch_optional(pool)
-    .await
-    .context("Failed to perform a query to validate auth credentials.")?
-    .map(|row| (row.user_id, Secret::new(row.password_hash)));
+        .fetch_optional(pool)
+        .await
+        .context("Failed to perform a query to validate authentication credentials.")?
+        .map(|row| (row.user_id, Secret::new(row.password_hash)));
     Ok(row)
 }
 
