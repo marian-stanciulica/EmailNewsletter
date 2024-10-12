@@ -1,7 +1,7 @@
 use crate::domain::SubscriberEmail;
+use crate::email_client::EmailClient;
 use config::{Config, File};
 use secrecy::{ExposeSecret, Secret};
-use crate::email_client::EmailClient;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
@@ -33,7 +33,7 @@ impl EmailClientSettings {
             self.base_url,
             sender_email,
             self.authorization_token,
-            timeout
+            timeout,
         )
     }
 

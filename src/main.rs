@@ -1,9 +1,9 @@
-use std::fmt::{Display, Debug};
-use tokio::task::JoinError;
 use email_newsletter::configuration::get_configuration;
 use email_newsletter::issue_delivery_worker::run_worker_until_stopped;
 use email_newsletter::startup::Application;
 use email_newsletter::telemetry::{get_subscriber, init_subscriber};
+use std::fmt::{Debug, Display};
+use tokio::task::JoinError;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {

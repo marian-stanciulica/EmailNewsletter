@@ -65,8 +65,7 @@ pub async fn save_response(
     };
 
     transaction
-        .execute(
-        sqlx::query_unchecked!(
+        .execute(sqlx::query_unchecked!(
             r#"
             UPDATE idempotency
             SET
@@ -82,7 +81,8 @@ pub async fn save_response(
             status_code,
             headers,
             body.as_ref()
-        )).await?;
+        ))
+        .await?;
     transaction.commit().await?;
 
     let http_response = response_head.set_body(body).map_into_boxed_body();
@@ -92,10 +92,14 @@ pub async fn save_response(
 #[allow(clippy::large_enum_variant)]
 pub enum NextAction {
     StartProcessing(Transaction<'static, Postgres>),
-    ReturnSavedResponse(HttpResponse)
+    ReturnSavedResponse(HttpResponse),
 }
 
-pub async fn try_processing(pool: &PgPool, idempotency_key: &IdempotencyKey, user_id: Uuid) -> Result<NextAction, anyhow::Error> {
+pub async fn try_processing(
+    pool: &PgPool,
+    idempotency_key: &IdempotencyKey,
+    user_id: Uuid,
+) -> Result<NextAction, anyhow::Error> {
     let mut transaction = pool.begin().await?;
     let query = sqlx::query!(
         r#"
@@ -110,10 +114,7 @@ pub async fn try_processing(pool: &PgPool, idempotency_key: &IdempotencyKey, use
         user_id,
         idempotency_key.as_ref()
     );
-    let n_inserted_rows = transaction
-        .execute(query)
-        .await?
-        .rows_affected();
+    let n_inserted_rows = transaction.execute(query).await?.rows_affected();
 
     if n_inserted_rows > 0 {
         Ok(NextAction::StartProcessing(transaction))

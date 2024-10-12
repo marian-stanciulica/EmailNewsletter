@@ -35,11 +35,14 @@ pub async fn publish_newsletter(
     } = body.0;
     let idempotency_key: IdempotencyKey = idempotency_key.try_into().map_err(e400)?;
 
-    let mut transaction = match try_processing(&pool, &idempotency_key, *user_id).await.map_err(e500)? {
+    let mut transaction = match try_processing(&pool, &idempotency_key, *user_id)
+        .await
+        .map_err(e500)?
+    {
         NextAction::StartProcessing(t) => t,
         NextAction::ReturnSavedResponse(saved_response) => {
             success_message().send();
-            return Ok(saved_response)
+            return Ok(saved_response);
         }
     };
 
@@ -66,7 +69,12 @@ fn success_message() -> FlashMessage {
 }
 
 #[tracing::instrument(skip_all)]
-async fn insert_newsletter_issue(transaction: &mut Transaction<'_, Postgres>, title: &str, text_content: &str, html_content: &str) -> Result<Uuid, sqlx::Error> {
+async fn insert_newsletter_issue(
+    transaction: &mut Transaction<'_, Postgres>,
+    title: &str,
+    text_content: &str,
+    html_content: &str,
+) -> Result<Uuid, sqlx::Error> {
     let newsletter_issue_id = Uuid::new_v4();
     let query = sqlx::query!(
         r#"
@@ -88,7 +96,10 @@ async fn insert_newsletter_issue(transaction: &mut Transaction<'_, Postgres>, ti
     Ok(newsletter_issue_id)
 }
 
-async fn enqueue_delivery_tasks(transaction: &mut Transaction<'_, Postgres>, newsletter_issue_id: Uuid) -> Result<(), sqlx::Error> {
+async fn enqueue_delivery_tasks(
+    transaction: &mut Transaction<'_, Postgres>,
+    newsletter_issue_id: Uuid,
+) -> Result<(), sqlx::Error> {
     let query = sqlx::query!(
         r#"
             INSERT INTO issue_delivery_queue (

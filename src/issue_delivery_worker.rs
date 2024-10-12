@@ -1,11 +1,11 @@
-use std::time::Duration;
-use crate::email_client::EmailClient;
-use sqlx::{Executor, PgPool, Postgres, Transaction};
-use tracing::{field::display, Span};
-use uuid::Uuid;
 use crate::configuration::Settings;
 use crate::domain::SubscriberEmail;
+use crate::email_client::EmailClient;
 use crate::startup::get_connection_pool;
+use sqlx::{Executor, PgPool, Postgres, Transaction};
+use std::time::Duration;
+use tracing::{field::display, Span};
+use uuid::Uuid;
 
 pub enum ExecutionOutcome {
     TaskCompleted,
@@ -19,7 +19,10 @@ pub enum ExecutionOutcome {
         subscriber_email=tracing::field::Empty
     )
 )]
-pub async fn try_execute_task(pool: &PgPool, email_client: &EmailClient) -> Result<ExecutionOutcome, anyhow::Error> {
+pub async fn try_execute_task(
+    pool: &PgPool,
+    email_client: &EmailClient,
+) -> Result<ExecutionOutcome, anyhow::Error> {
     let task = dequeue_task(pool).await?;
 
     if task.is_none() {
@@ -40,9 +43,10 @@ pub async fn try_execute_task(pool: &PgPool, email_client: &EmailClient) -> Resu
                     &email,
                     &issue.title,
                     &issue.html_content,
-                    &issue.text_content
+                    &issue.text_content,
                 )
-                .await {
+                .await
+            {
                 tracing::error!(
                     error.cause_chain = ?e,
                     error.message = %e,
@@ -66,7 +70,9 @@ pub async fn try_execute_task(pool: &PgPool, email_client: &EmailClient) -> Resu
 type PgTransaction = Transaction<'static, Postgres>;
 
 #[tracing::instrument(skip_all)]
-async fn dequeue_task(pool: &PgPool) -> Result<Option<(PgTransaction, Uuid, String)>, anyhow::Error> {
+async fn dequeue_task(
+    pool: &PgPool,
+) -> Result<Option<(PgTransaction, Uuid, String)>, anyhow::Error> {
     let mut transaction = pool.begin().await?;
     let r = sqlx::query!(
         r#"
@@ -77,10 +83,10 @@ async fn dequeue_task(pool: &PgPool) -> Result<Option<(PgTransaction, Uuid, Stri
             LIMIT 1
         "#
     )
-        .fetch_optional(&mut *transaction)
-        .await?;
+    .fetch_optional(&mut *transaction)
+    .await?;
 
-    if let Some(r)= r {
+    if let Some(r) = r {
         Ok(Some((
             transaction,
             r.newsletter_issue_id,
@@ -92,7 +98,11 @@ async fn dequeue_task(pool: &PgPool) -> Result<Option<(PgTransaction, Uuid, Stri
 }
 
 #[tracing::instrument(skip_all)]
-async fn delete_task(mut transaction: PgTransaction, issue_id: Uuid, email: &str) -> Result<(), anyhow::Error> {
+async fn delete_task(
+    mut transaction: PgTransaction,
+    issue_id: Uuid,
+    email: &str,
+) -> Result<(), anyhow::Error> {
     let query = sqlx::query!(
         r#"
             DELETE FROM issue_delivery_queue
@@ -124,8 +134,8 @@ async fn get_issue(pool: &PgPool, issue_id: Uuid) -> Result<NewsletterIssue, any
         "#,
         issue_id
     )
-        .fetch_one(pool)
-        .await?;
+    .fetch_one(pool)
+    .await?;
     Ok(issue)
 }
 
