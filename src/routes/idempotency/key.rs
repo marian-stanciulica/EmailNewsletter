@@ -1,4 +1,3 @@
-
 #[derive(Debug)]
 pub struct IdempotencyKey(String);
 
@@ -29,4 +28,3 @@ impl AsRef<str> for IdempotencyKey {
         &self.0
     }
 }
-

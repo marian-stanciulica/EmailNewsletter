@@ -1,11 +1,11 @@
 mod admin;
 mod health_check;
 mod home;
+mod idempotency;
 mod login;
 mod newsletters;
 mod subscriptions;
 mod subscriptions_confirm;
-mod idempotency;
 
 pub use admin::*;
 pub use health_check::*;
